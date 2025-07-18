@@ -1,0 +1,123 @@
+SISTEMA DE RUTAS ÓPTIMAS - CONTEXTO DEL PROYECTO
+====================================================
+
+📍 ¿QUÉ ES EL SISTEMA?
+----------------------
+El Sistema de Rutas Óptimas es una aplicación web que ayuda a encontrar la mejor ruta entre ciudades del Ecuador, 
+considerando tanto la distancia como el tiempo de viaje, y el estado de las carreteras.
+
+🎯 ¿PARA QUÉ SIRVE?
+-------------------
+1. **Para Usuarios Comunes:**
+   - Planificar viajes entre ciudades
+   - Encontrar la ruta más corta o más rápida
+   - Ver el tiempo estimado de viaje
+   - Consultar el historial de búsquedas realizadas
+
+2. **Para Administradores:**
+   - Gestionar la base de datos de ciudades y carreteras
+   - Actualizar el estado de las vías (buena, regular, mala)
+   - Mantener información actualizada del sistema
+
+🔧 ¿CÓMO FUNCIONA?
+------------------
+**Algoritmo Inteligente:**
+- Usa el algoritmo de Dijkstra para encontrar rutas óptimas
+- Considera el estado de las carreteras (penaliza vías en mal estado)
+- Optimiza por distancia o tiempo según la preferencia del usuario
+
+**Interfaz Amigable:**
+- Selección simple de ciudades origen y destino
+- Visualización en mapa interactivo
+- Resultados claros con distancia y tiempo estimado
+
+**Sistema de Penalización:**
+- Vías en BUEN estado: Sin penalización (factor 1.0)
+- Vías en estado REGULAR: Penalización +50% (factor 1.5)
+- Vías en MAL estado: Penalización +100% (factor 2.0)
+
+📊 DATOS DEL SISTEMA
+--------------------
+- 24 Provincias del Ecuador
+- 72 Ciudades principales
+- 172 Conexiones viales (carreteras)
+- Sistema de autenticación de usuarios
+- Roles: Usuario común y Administrador
+
+🗺️ FUNCIONALIDADES PRINCIPALES
+-------------------------------
+**CONSULTA DE RUTAS:**
+1. Seleccionar ciudad origen
+2. Seleccionar ciudad destino
+3. Elegir criterio (distancia o tiempo)
+4. Ver ruta óptima en mapa
+5. Obtener información detallada del viaje
+
+**ADMINISTRACIÓN:**
+1. Gestión de provincias (crear, editar, eliminar)
+2. Gestión de ciudades (crear, editar, eliminar)
+3. Gestión de vías (crear, editar, eliminar)
+4. Cambio de estado de carreteras
+5. Estadísticas del sistema
+
+**HISTORIAL:**
+1. Ver todas las consultas realizadas
+2. Repetir consultas anteriores
+3. Estadísticas personales de uso
+
+🔐 SEGURIDAD
+------------
+- Sistema de login seguro
+- Roles diferenciados (usuario/admin)
+- Protección de rutas administrativas
+- Sesiones encriptadas
+
+🌐 TECNOLOGÍA
+-------------
+- Frontend: HTML5, CSS3, JavaScript, Bootstrap, AdminLTE
+- Backend: Python Flask
+- Base de datos: MySQL
+- Mapas: Leaflet.js
+- Algoritmos: Dijkstra para rutas óptimas
+
+💡 VENTAJAS DEL SISTEMA
+-----------------------
+✅ Encuentra rutas realmente óptimas (no solo las más cortas)
+✅ Considera el estado real de las carreteras
+✅ Interfaz intuitiva y fácil de usar
+✅ Sistema completo de administración
+✅ Historial de consultas para seguimiento
+✅ Adaptable a cambios en la infraestructura vial
+
+🎓 CASO DE USO EJEMPLO
+----------------------
+**Situación:** Juan quiere viajar de Quito a Guayaquil y prefiere la ruta más rápida.
+
+**Proceso:**
+1. Juan ingresa al sistema
+2. Selecciona "Quito" como origen
+3. Selecciona "Guayaquil" como destino
+4. Elige "Tiempo" como criterio de optimización
+5. El sistema calcula la mejor ruta considerando:
+   - Distancias entre ciudades
+   - Estado de las carreteras
+   - Penalizaciones por mal estado de vías
+6. Juan obtiene:
+   - Ruta óptima: Quito → Latacunga → Ambato → Riobamba → Guayaquil
+   - Distancia total: 420 km
+   - Tiempo estimado: 6.5 horas
+   - Mapa visual de la ruta
+
+**Resultado:** Juan puede planificar su viaje con información precisa y confiable.
+
+🔄 FLUJO DE TRABAJO
+-------------------
+**Usuario Común:**
+Login → Consultar Ruta → Ver Resultados → Historial
+
+**Administrador:**
+Login → Panel Admin → Gestionar Datos → Actualizar Estados → Estadísticas
+
+Este sistema es ideal para empresas de transporte, agencias de viajes, 
+instituciones gubernamentales y cualquier persona que necesite planificar 
+rutas eficientes en Ecuador.
