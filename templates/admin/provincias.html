@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Provincias - Sistema de Rutas{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Gestión de Provincias</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="/admin">Panel Admin</a></li>
+                    <li class="breadcrumb-item active">Provincias</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Tabla de provincias -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-map"></i> Lista de Provincias</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalProvincia">
+                        <i class="fas fa-plus"></i> Nueva Provincia
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="loadingProvincias" class="text-center" style="display: none;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando provincias...</p>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="provinciasTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Ciudades</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="provinciasBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal para crear/editar provincia -->
+<div class="modal fade" id="modalProvincia" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modalTitle">Nueva Provincia</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="formProvincia">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombreProvincia">Nombre de la Provincia</label>
+                        <input type="text" class="form-control" id="nombreProvincia" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let provinciasData = [];
+    let editandoProvincia = null;
+
+    function cargarProvincias() {
+        $('#loadingProvincias').show();
+        
+        $.ajax({
+            url: '/api/admin/provincias',
+            type: 'GET',
+            success: function(data) {
+                $('#loadingProvincias').hide();
+                provinciasData = data;
+                mostrarProvincias(data);
+            },
+            error: function(xhr, status, error) {
+                $('#loadingProvincias').hide();
+                alert('Error al cargar las provincias: ' + error);
+            }
+        });
+    }
+
+    function mostrarProvincias(data) {
+        let tbody = $('#provinciasBody');
+        tbody.empty();
+
+        data.forEach(provincia => {
+            let row = `
+                <tr>
+                    <td>${provincia.id}</td>
+                    <td><strong>${provincia.nombre}</strong></td>
+                    <td>
+                        <span class="badge badge-info" id="ciudades-${provincia.id}">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-warning" onclick="editarProvincia(${provincia.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarProvincia(${provincia.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+            
+            // Cargar conteo de ciudades
+            contarCiudadesProvincia(provincia.id);
+        });
+
+        // Inicializar DataTable
+        if ($.fn.DataTable.isDataTable('#provinciasTable')) {
+            $('#provinciasTable').DataTable().destroy();
+        }
+        
+        $('#provinciasTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 25
+        });
+    }
+
+    function contarCiudadesProvincia(provinciaId) {
+        $.get('/api/ciudades', function(ciudades) {
+            let ciudadesProvincia = ciudades.filter(c => c.provincia_id === provinciaId);
+            $(`#ciudades-${provinciaId}`).html(`${ciudadesProvincia.length} ciudades`);
+        });
+    }
+
+    function editarProvincia(provinciaId) {
+        let provincia = provinciasData.find(p => p.id === provinciaId);
+        if (provincia) {
+            editandoProvincia = provinciaId;
+            $('#modalTitle').text('Editar Provincia');
+            $('#nombreProvincia').val(provincia.nombre);
+            $('#modalProvincia').modal('show');
+        }
+    }
+
+    function eliminarProvincia(provinciaId) {
+        let provincia = provinciasData.find(p => p.id === provinciaId);
+        if (confirm(`¿Está seguro de eliminar la provincia "${provincia.nombre}"?`)) {
+            $.ajax({
+                url: `/api/admin/provincias/${provinciaId}`,
+                type: 'DELETE',
+                success: function(response) {
+                    alert('Provincia eliminada exitosamente');
+                    cargarProvincias();
+                },
+                error: function(xhr, status, error) {
+                    let errorMsg = 'Error al eliminar la provincia';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    }
+                    alert(errorMsg);
+                }
+            });
+        }
+    }
+
+    // Eventos
+    $('#modalProvincia').on('hidden.bs.modal', function () {
+        editandoProvincia = null;
+        $('#modalTitle').text('Nueva Provincia');
+        $('#formProvincia')[0].reset();
+    });
+
+    $('#formProvincia').on('submit', function(e) {
+        e.preventDefault();
+        
+        let nombre = $('#nombreProvincia').val().trim();
+        if (!nombre) {
+            alert('El nombre es requerido');
+            return;
+        }
+
+        let url = editandoProvincia ? `/api/admin/provincias/${editandoProvincia}` : '/api/admin/provincias';
+        let method = editandoProvincia ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: 'application/json',
+            data: JSON.stringify({ nombre: nombre }),
+            success: function(response) {
+                $('#modalProvincia').modal('hide');
+                alert(editandoProvincia ? 'Provincia actualizada exitosamente' : 'Provincia creada exitosamente');
+                cargarProvincias();
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = 'Error al guardar la provincia';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                alert(errorMsg);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        cargarProvincias();
+    });
+</script>
+{% endblock %}

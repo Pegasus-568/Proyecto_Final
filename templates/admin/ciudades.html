@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Ciudades - Sistema de Rutas{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Gestión de Ciudades</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="/admin">Panel Admin</a></li>
+                    <li class="breadcrumb-item active">Ciudades</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Tabla de ciudades -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-city"></i> Lista de Ciudades</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalCiudad">
+                        <i class="fas fa-plus"></i> Nueva Ciudad
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="loadingCiudades" class="text-center" style="display: none;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando ciudades...</p>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="ciudadesTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Nombre</th>
+                                <th>Provincia</th>
+                                <th>Latitud</th>
+                                <th>Longitud</th>
+                                <th>Vías</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ciudadesBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal para crear/editar ciudad -->
+<div class="modal fade" id="modalCiudad" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modalTitle">Nueva Ciudad</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="formCiudad">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="nombreCiudad">Nombre de la Ciudad</label>
+                        <input type="text" class="form-control" id="nombreCiudad" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="provinciaId">Provincia</label>
+                        <select class="form-control" id="provinciaId" required>
+                            <option value="">Seleccione una provincia</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="latitud">Latitud</label>
+                                <input type="number" step="any" class="form-control" id="latitud" required>
+                                <small class="form-text text-muted">Ejemplo: -2.89137</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="longitud">Longitud</label>
+                                <input type="number" step="any" class="form-control" id="longitud" required>
+                                <small class="form-text text-muted">Ejemplo: -78.77865</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Ayuda:</strong> Puedes obtener las coordenadas desde 
+                        <a href="https://www.google.com/maps" target="_blank">Google Maps</a>.
+                        Haz clic derecho en el mapa y selecciona las coordenadas.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let ciudadesData = [];
+    let provinciasData = [];
+    let editandoCiudad = null;
+
+    function cargarProvincias() {
+        $.get('/api/admin/provincias', function(data) {
+            provinciasData = data;
+            let select = $('#provinciaId');
+            select.empty().append('<option value="">Seleccione una provincia</option>');
+            
+            data.forEach(provincia => {
+                select.append(`<option value="${provincia.id}">${provincia.nombre}</option>`);
+            });
+        });
+    }
+
+    function cargarCiudades() {
+        $('#loadingCiudades').show();
+        
+        $.ajax({
+            url: '/api/admin/ciudades',
+            type: 'GET',
+            success: function(data) {
+                $('#loadingCiudades').hide();
+                ciudadesData = data;
+                mostrarCiudades(data);
+            },
+            error: function(xhr, status, error) {
+                $('#loadingCiudades').hide();
+                alert('Error al cargar las ciudades: ' + error);
+            }
+        });
+    }
+
+    function mostrarCiudades(data) {
+        let tbody = $('#ciudadesBody');
+        tbody.empty();
+
+        data.forEach(ciudad => {
+            let row = `
+                <tr>
+                    <td>${ciudad.id}</td>
+                    <td><strong>${ciudad.nombre}</strong></td>
+                    <td>
+                        <span class="badge badge-primary">
+                            ${ciudad.provincia_nombre || 'Sin provincia'}
+                        </span>
+                    </td>
+                    <td>${ciudad.latitud}</td>
+                    <td>${ciudad.longitud}</td>
+                    <td>
+                        <span class="badge badge-info" id="vias-${ciudad.id}">
+                            <i class="fas fa-spinner fa-spin"></i>
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="verEnMapa(${ciudad.latitud}, ${ciudad.longitud})">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="editarCiudad(${ciudad.id})">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarCiudad(${ciudad.id})">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+            
+            // Cargar conteo de vías
+            contarViasCiudad(ciudad.id);
+        });
+
+        // Inicializar DataTable
+        if ($.fn.DataTable.isDataTable('#ciudadesTable')) {
+            $('#ciudadesTable').DataTable().destroy();
+        }
+        
+        $('#ciudadesTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 25
+        });
+    }
+
+    function contarViasCiudad(ciudadId) {
+        $.get('/api/vias', function(vias) {
+            let viasCiudad = vias.filter(v => v.ciudad_origen_id === ciudadId || v.ciudad_destino_id === ciudadId);
+            $(`#vias-${ciudadId}`).html(`${viasCiudad.length} vías`);
+        });
+    }
+
+    function verEnMapa(lat, lon) {
+        let url = `https://www.google.com/maps?q=${lat},${lon}`;
+        window.open(url, '_blank');
+    }
+
+    function editarCiudad(ciudadId) {
+        let ciudad = ciudadesData.find(c => c.id === ciudadId);
+        if (ciudad) {
+            editandoCiudad = ciudadId;
+            $('#modalTitle').text('Editar Ciudad');
+            $('#nombreCiudad').val(ciudad.nombre);
+            $('#provinciaId').val(ciudad.provincia_id);
+            $('#latitud').val(ciudad.latitud);
+            $('#longitud').val(ciudad.longitud);
+            $('#modalCiudad').modal('show');
+        }
+    }
+
+    function eliminarCiudad(ciudadId) {
+        let ciudad = ciudadesData.find(c => c.id === ciudadId);
+        if (confirm(`¿Está seguro de eliminar la ciudad "${ciudad.nombre}"?`)) {
+            $.ajax({
+                url: `/api/admin/ciudades/${ciudadId}`,
+                type: 'DELETE',
+                success: function(response) {
+                    alert('Ciudad eliminada exitosamente');
+                    cargarCiudades();
+                },
+                error: function(xhr, status, error) {
+                    let errorMsg = 'Error al eliminar la ciudad';
+                    if (xhr.responseJSON && xhr.responseJSON.error) {
+                        errorMsg = xhr.responseJSON.error;
+                    }
+                    alert(errorMsg);
+                }
+            });
+        }
+    }
+
+    // Eventos
+    $('#modalCiudad').on('hidden.bs.modal', function () {
+        editandoCiudad = null;
+        $('#modalTitle').text('Nueva Ciudad');
+        $('#formCiudad')[0].reset();
+    });
+
+    $('#modalCiudad').on('show.bs.modal', function () {
+        cargarProvincias();
+    });
+
+    $('#formCiudad').on('submit', function(e) {
+        e.preventDefault();
+        
+        let nombre = $('#nombreCiudad').val().trim();
+        let provincia_id = $('#provinciaId').val();
+        let latitud = $('#latitud').val();
+        let longitud = $('#longitud').val();
+
+        if (!nombre || !provincia_id || !latitud || !longitud) {
+            alert('Todos los campos son requeridos');
+            return;
+        }
+
+        let url = editandoCiudad ? `/api/admin/ciudades/${editandoCiudad}` : '/api/admin/ciudades';
+        let method = editandoCiudad ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: 'application/json',
+            data: JSON.stringify({
+                nombre: nombre,
+                provincia_id: parseInt(provincia_id),
+                latitud: parseFloat(latitud),
+                longitud: parseFloat(longitud)
+            }),
+            success: function(response) {
+                $('#modalCiudad').modal('hide');
+                alert(editandoCiudad ? 'Ciudad actualizada exitosamente' : 'Ciudad creada exitosamente');
+                cargarCiudades();
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = 'Error al guardar la ciudad';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                alert(errorMsg);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        cargarCiudades();
+    });
+</script>
+{% endblock %}

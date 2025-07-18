@@ -1,0 +1,335 @@
+{% extends 'base.html' %}
+
+{% block title %}Panel Administrador - Sistema de Rutas{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Panel de Administración</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item active">Panel Admin</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Estadísticas rápidas -->
+        <div class="row">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3 id="totalProvincias">0</h3>
+                        <p>Provincias</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-map"></i>
+                    </div>
+                    <a href="/provincias" class="small-box-footer">
+                        Más info <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3 id="totalCiudades">0</h3>
+                        <p>Ciudades</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-city"></i>
+                    </div>
+                    <a href="/ciudades" class="small-box-footer">
+                        Más info <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3 id="totalVias">0</h3>
+                        <p>Vías</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-road"></i>
+                    </div>
+                    <a href="/vias" class="small-box-footer">
+                        Más info <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3 id="viasProblemas">0</h3>
+                        <p>Vías con Problemas</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <a href="/vias" class="small-box-footer">
+                        Más info <i class="fas fa-arrow-circle-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel de control rápido -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">
+                            <i class="fas fa-tools"></i> Panel de Control
+                        </h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-primary btn-sm" onclick="cargarEstadisticas()" id="btnActualizar">
+                                <i class="fas fa-sync"></i> Actualizar Estadísticas
+                            </button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <a href="/provincias" class="btn btn-info btn-block">
+                                    <i class="fas fa-map"></i> Gestionar Provincias
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/ciudades" class="btn btn-success btn-block">
+                                    <i class="fas fa-city"></i> Gestionar Ciudades
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/vias" class="btn btn-warning btn-block">
+                                    <i class="fas fa-road"></i> Gestionar Vías
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-danger btn-block" onclick="verificarViasProblemas()">
+                                    <i class="fas fa-exclamation-triangle"></i> Verificar Problemas
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Accesos rápidos -->
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card card-primary">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-map"></i> Gestión de Provincias</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Administra las provincias del sistema.</p>
+                        <ul>
+                            <li>Crear nuevas provincias</li>
+                            <li>Editar existentes</li>
+                            <li>Eliminar (si no tienen ciudades)</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/provincias" class="btn btn-primary">
+                            <i class="fas fa-cog"></i> Gestionar Provincias
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-success">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-city"></i> Gestión de Ciudades</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Administra las ciudades del sistema.</p>
+                        <ul>
+                            <li>Crear nuevas ciudades</li>
+                            <li>Editar coordenadas</li>
+                            <li>Asignar a provincias</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/ciudades" class="btn btn-success">
+                            <i class="fas fa-cog"></i> Gestionar Ciudades
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-warning">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-road"></i> Gestión de Vías</h3>
+                    </div>
+                    <div class="card-body">
+                        <p>Administra las vías y su estado.</p>
+                        <ul>
+                            <li>Crear nuevas vías</li>
+                            <li>Cambiar estados</li>
+                            <li>Editar distancias y tiempos</li>
+                        </ul>
+                    </div>
+                    <div class="card-footer">
+                        <a href="/vias" class="btn btn-warning">
+                            <i class="fas fa-cog"></i> Gestionar Vías
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones rápidas -->
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-tools"></i> Acciones Rápidas</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-info btn-block" onclick="cargarEstadisticas()">
+                                    <i class="fas fa-sync-alt"></i> Actualizar Estadísticas
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <button class="btn btn-outline-warning btn-block" onclick="verificarViasProblemas()">
+                                    <i class="fas fa-search"></i> Verificar Vías Problemáticas
+                                </button>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/consultar" class="btn btn-outline-primary btn-block">
+                                    <i class="fas fa-route"></i> Probar Sistema de Rutas
+                                </a>
+                            </div>
+                            <div class="col-md-3">
+                                <a href="/historial" class="btn btn-outline-success btn-block">
+                                    <i class="fas fa-history"></i> Ver Historial General
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function cargarEstadisticas() {
+        console.log('🔄 Cargando estadísticas del panel admin...');
+        
+        // Mostrar indicador de carga
+        $('#btnActualizar').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Cargando...');
+        
+        // Cargar estadísticas de provincias
+        $.ajax({
+            url: '/api/admin/provincias',
+            type: 'GET',
+            success: function(data) {
+                console.log('✅ Provincias cargadas:', data.length);
+                $('#totalProvincias').text(data.length);
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Error cargando provincias:', error);
+                $('#totalProvincias').text('Error').css('color', 'red');
+            }
+        });
+
+        // Cargar estadísticas de ciudades
+        $.ajax({
+            url: '/api/admin/ciudades',
+            type: 'GET',
+            success: function(data) {
+                console.log('✅ Ciudades cargadas:', data.length);
+                $('#totalCiudades').text(data.length);
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Error cargando ciudades:', error);
+                $('#totalCiudades').text('Error').css('color', 'red');
+            }
+        });
+
+        // Cargar estadísticas de vías
+        $.ajax({
+            url: '/api/admin/vias',
+            type: 'GET',
+            success: function(data) {
+                console.log('✅ Vías cargadas:', data.length);
+                $('#totalVias').text(data.length);
+                
+                // Contar vías con problemas (regular y malo)
+                let viasProblemas = data.filter(via => via.estado === 'regular' || via.estado === 'malo').length;
+                console.log('⚠️ Vías con problemas:', viasProblemas);
+                $('#viasProblemas').text(viasProblemas);
+                
+                // Mostrar mensaje si se cargaron correctamente
+                console.log('✅ Todas las estadísticas cargadas correctamente');
+            },
+            error: function(xhr, status, error) {
+                console.error('❌ Error cargando vías:', error);
+                $('#totalVias').text('Error').css('color', 'red');
+                $('#viasProblemas').text('Error').css('color', 'red');
+            },
+            complete: function() {
+                // Restaurar botón de actualizar
+                $('#btnActualizar').prop('disabled', false).html('<i class="fas fa-sync"></i> Actualizar Estadísticas');
+            }
+        });
+    }
+
+    function verificarViasProblemas() {
+        $.ajax({
+            url: '/api/admin/vias',
+            type: 'GET',
+            success: function(data) {
+                let viasProblemas = data.filter(via => via.estado === 'regular' || via.estado === 'malo');
+                
+                if (viasProblemas.length === 0) {
+                    alert('¡Excelente! No hay vías con problemas reportados.');
+                } else {
+                    let mensaje = `Se encontraron ${viasProblemas.length} vías con problemas:\n\n`;
+                    viasProblemas.slice(0, 10).forEach(via => {
+                        mensaje += `• ${via.ciudad_origen_nombre} → ${via.ciudad_destino_nombre} (${via.estado.toUpperCase()})\n`;
+                    });
+                    
+                    if (viasProblemas.length > 10) {
+                        mensaje += `\n... y ${viasProblemas.length - 10} más.`;
+                    }
+                    
+                    alert(mensaje);
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error verificando vías:', error);
+                alert('Error al verificar vías: ' + error);
+            }
+        });
+    }
+
+    // Mostrar mensaje de bienvenida
+    function mostrarMensajeBienvenida() {
+        console.log('🎉 Panel de Administración cargado');
+        console.log('🔍 Para ver logs detallados, abra las herramientas de desarrollador');
+    }
+
+    $(document).ready(function() {
+        mostrarMensajeBienvenida();
+        cargarEstadisticas();
+        
+        // Recargar estadísticas cada 60 segundos
+        setInterval(cargarEstadisticas, 60000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,462 @@
+{% extends 'base.html' %}
+
+{% block title %}Gestión de Vías - Sistema de Rutas{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Gestión de Vías</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item"><a href="/admin">Panel Admin</a></li>
+                    <li class="breadcrumb-item active">Vías</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Estadísticas de vías -->
+        <div class="row mb-3">
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-success"><i class="fas fa-road"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Vías en Buen Estado</span>
+                        <span class="info-box-number" id="viasBuenas">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-warning"><i class="fas fa-exclamation-triangle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Vías Regulares</span>
+                        <span class="info-box-number" id="viasRegulares">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-danger"><i class="fas fa-times-circle"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Vías en Mal Estado</span>
+                        <span class="info-box-number" id="viasMalas">0</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="info-box">
+                    <span class="info-box-icon bg-info"><i class="fas fa-route"></i></span>
+                    <div class="info-box-content">
+                        <span class="info-box-text">Total Vías</span>
+                        <span class="info-box-number" id="totalVias">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de vías -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-road"></i> Lista de Vías</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-success" data-toggle="modal" data-target="#modalVia">
+                        <i class="fas fa-plus"></i> Nueva Vía
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="loadingVias" class="text-center" style="display: none;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando vías...</p>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped" id="viasTable">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Origen</th>
+                                <th>Destino</th>
+                                <th>Distancia (km)</th>
+                                <th>Tiempo (min)</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="viasBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal para crear/editar vía -->
+<div class="modal fade" id="modalVia" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="modalTitle">Nueva Vía</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="formVia">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label for="ciudadOrigen">Ciudad Origen</label>
+                        <select class="form-control" id="ciudadOrigen" required>
+                            <option value="">Seleccione ciudad origen</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="ciudadDestino">Ciudad Destino</label>
+                        <select class="form-control" id="ciudadDestino" required>
+                            <option value="">Seleccione ciudad destino</option>
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="distancia">Distancia (km)</label>
+                                <input type="number" step="0.01" class="form-control" id="distancia" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label for="tiempo">Tiempo (minutos)</label>
+                                <input type="number" step="0.1" class="form-control" id="tiempo">
+                                <small class="form-text text-muted">Opcional - se calculará automáticamente</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="estado">Estado de la Vía</label>
+                        <select class="form-control" id="estado" required>
+                            <option value="bueno">BUENO</option>
+                            <option value="regular">REGULAR</option>
+                            <option value="malo">MALO</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Guardar
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para cambio rápido de estado -->
+<div class="modal fade" id="modalEstado" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-sm" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">Cambiar Estado</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p id="viaInfo"></p>
+                <div class="form-group">
+                    <label for="nuevoEstado">Nuevo Estado</label>
+                    <select class="form-control" id="nuevoEstado">
+                        <option value="bueno">BUENO</option>
+                        <option value="regular">REGULAR</option>
+                        <option value="malo">MALO</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary" onclick="confirmarCambioEstado()">
+                    <i class="fas fa-check"></i> Cambiar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let viasData = [];
+    let ciudadesData = [];
+    let editandoVia = null;
+    let viaEstado = null;
+
+    function cargarCiudades() {
+        $.get('/api/admin/ciudades', function(data) {
+            ciudadesData = data;
+            let selectOrigen = $('#ciudadOrigen');
+            let selectDestino = $('#ciudadDestino');
+            
+            selectOrigen.empty().append('<option value="">Seleccione ciudad origen</option>');
+            selectDestino.empty().append('<option value="">Seleccione ciudad destino</option>');
+            
+            data.forEach(ciudad => {
+                selectOrigen.append(`<option value="${ciudad.id}">${ciudad.nombre}</option>`);
+                selectDestino.append(`<option value="${ciudad.id}">${ciudad.nombre}</option>`);
+            });
+        });
+    }
+
+    function cargarVias() {
+        $('#loadingVias').show();
+        
+        $.ajax({
+            url: '/api/admin/vias',
+            type: 'GET',
+            success: function(data) {
+                $('#loadingVias').hide();
+                viasData = data;
+                mostrarVias(data);
+                actualizarEstadisticas(data);
+            },
+            error: function(xhr, status, error) {
+                $('#loadingVias').hide();
+                alert('Error al cargar las vías: ' + error);
+            }
+        });
+    }
+
+    function mostrarVias(data) {
+        // Destruir DataTable existente si existe
+        if ($.fn.DataTable.isDataTable('#viasTable')) {
+            $('#viasTable').DataTable().destroy();
+        }
+        
+        let tbody = $('#viasBody');
+        tbody.empty();
+
+        data.forEach(via => {
+            let estadoClass = via.estado === 'bueno' ? 'success' : 
+                             via.estado === 'regular' ? 'warning' : 'danger';
+            
+            let row = `
+                <tr>
+                    <td>${via.id}</td>
+                    <td><strong>${via.ciudad_origen_nombre}</strong></td>
+                    <td><strong>${via.ciudad_destino_nombre}</strong></td>
+                    <td>${via.distancia_km} km</td>
+                    <td>${via.tiempo_minutos || 'N/A'} min</td>
+                    <td>
+                        <span class="badge badge-${estadoClass}">${via.estado.toUpperCase()}</span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="cambiarEstado(${via.id})" title="Cambiar estado">
+                            <i class="fas fa-traffic-light"></i>
+                        </button>
+                        <button class="btn btn-sm btn-warning" onclick="editarVia(${via.id})" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="eliminarVia(${via.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+
+        // Inicializar DataTable después de poblar la tabla
+        $('#viasTable').DataTable({
+            "language": {
+                "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+            },
+            "pageLength": 25,
+            "order": [[ 0, "desc" ]], // Ordenar por ID descendente
+            "columnDefs": [
+                { "targets": 6, "orderable": false } // Desactivar ordenamiento en columna de acciones
+            ]
+        });
+    }
+
+    function actualizarEstadisticas(data) {
+        let viasBuenas = data.filter(v => v.estado === 'bueno').length;
+        let viasRegulares = data.filter(v => v.estado === 'regular').length;
+        let viasMalas = data.filter(v => v.estado === 'malo').length;
+        
+        $('#viasBuenas').text(viasBuenas);
+        $('#viasRegulares').text(viasRegulares);
+        $('#viasMalas').text(viasMalas);
+        $('#totalVias').text(data.length);
+    }
+
+    function cambiarEstado(viaId) {
+        let via = viasData.find(v => v.id === viaId);
+        if (via) {
+            viaEstado = viaId;
+            $('#viaInfo').text(`${via.ciudad_origen_nombre} → ${via.ciudad_destino_nombre}`);
+            $('#nuevoEstado').val(via.estado);
+            $('#modalEstado').modal('show');
+        }
+    }
+
+    function confirmarCambioEstado() {
+        let nuevoEstado = $('#nuevoEstado').val();
+        
+        $.ajax({
+            url: `/api/admin/vias/${viaEstado}/estado`,
+            type: 'PUT',
+            contentType: 'application/json',
+            data: JSON.stringify({ estado: nuevoEstado }),
+            success: function(response) {
+                $('#modalEstado').modal('hide');
+                
+                // Actualizar el estado en los datos locales
+                let viaIndex = viasData.findIndex(v => v.id === viaEstado);
+                if (viaIndex !== -1) {
+                    viasData[viaIndex].estado = nuevoEstado;
+                }
+                
+                // Actualizar visualmente la fila específica
+                actualizarFilaVia(viaEstado, nuevoEstado);
+                
+                // Actualizar estadísticas
+                actualizarEstadisticas(viasData);
+                
+                // Mostrar mensaje de éxito
+                alert('Estado cambiado exitosamente');
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = 'Error al cambiar el estado';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                alert(errorMsg);
+            }
+        });
+    }
+
+    function actualizarFilaVia(viaId, nuevoEstado) {
+        // Buscar la fila en la tabla
+        $('#viasTable tbody tr').each(function() {
+            let primeraColumna = $(this).find('td:first').text();
+            if (parseInt(primeraColumna) === viaId) {
+                // Actualizar la columna de estado
+                let estadoClass = nuevoEstado === 'bueno' ? 'success' : 
+                                 nuevoEstado === 'regular' ? 'warning' : 'danger';
+                
+                $(this).find('td:nth-child(6)').html(
+                    `<span class="badge badge-${estadoClass}">${nuevoEstado.toUpperCase()}</span>`
+                );
+                return false; // Salir del each
+            }
+        });
+    }
+
+    function editarVia(viaId) {
+        let via = viasData.find(v => v.id === viaId);
+        if (via) {
+            editandoVia = viaId;
+            $('#modalTitle').text('Editar Vía');
+            $('#ciudadOrigen').val(via.ciudad_origen_id).prop('disabled', true);
+            $('#ciudadDestino').val(via.ciudad_destino_id).prop('disabled', true);
+            $('#distancia').val(via.distancia_km);
+            $('#tiempo').val(via.tiempo_minutos || '');
+            $('#estado').val(via.estado);
+            $('#modalVia').modal('show');
+        }
+    }
+
+    function eliminarVia(viaId) {
+        let via = viasData.find(v => v.id === viaId);
+        if (confirm(`¿Está seguro de eliminar la vía "${via.ciudad_origen_nombre} → ${via.ciudad_destino_nombre}"?`)) {
+            $.ajax({
+                url: `/api/admin/vias/${viaId}`,
+                type: 'DELETE',
+                success: function(response) {
+                    alert('Vía eliminada exitosamente');
+                    cargarVias();
+                },
+                error: function(xhr, status, error) {
+                    alert('Error al eliminar la vía: ' + error);
+                }
+            });
+        }
+    }
+
+    // Eventos
+    $('#modalVia').on('hidden.bs.modal', function () {
+        editandoVia = null;
+        $('#modalTitle').text('Nueva Vía');
+        $('#formVia')[0].reset();
+        $('#ciudadOrigen, #ciudadDestino').prop('disabled', false);
+    });
+
+    $('#modalVia').on('show.bs.modal', function () {
+        cargarCiudades();
+    });
+
+    $('#formVia').on('submit', function(e) {
+        e.preventDefault();
+        
+        let origen = $('#ciudadOrigen').val();
+        let destino = $('#ciudadDestino').val();
+        let distancia = $('#distancia').val();
+        let tiempo = $('#tiempo').val();
+        let estado = $('#estado').val();
+
+        if (!origen || !destino || !distancia || !estado) {
+            alert('Los campos origen, destino, distancia y estado son requeridos');
+            return;
+        }
+
+        if (origen === destino) {
+            alert('La ciudad origen y destino no pueden ser iguales');
+            return;
+        }
+
+        let data = {
+            ciudad_origen_id: parseInt(origen),
+            ciudad_destino_id: parseInt(destino),
+            distancia_km: parseFloat(distancia),
+            estado: estado
+        };
+
+        if (tiempo) {
+            data.tiempo_minutos = parseFloat(tiempo);
+        }
+
+        let url = editandoVia ? `/api/admin/vias/${editandoVia}` : '/api/admin/vias';
+        let method = editandoVia ? 'PUT' : 'POST';
+
+        $.ajax({
+            url: url,
+            type: method,
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                $('#modalVia').modal('hide');
+                alert(editandoVia ? 'Vía actualizada exitosamente' : 'Vía creada exitosamente');
+                cargarVias();
+            },
+            error: function(xhr, status, error) {
+                let errorMsg = 'Error al guardar la vía';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                alert(errorMsg);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        cargarVias();
+    });
+</script>
+{% endblock %}

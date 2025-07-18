@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block title %}Consultar Ruta - Sistema de Rutas{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Consulta de Rutas</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item active">Consultar Ruta</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Formulario de consulta -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-route"></i> Parámetros de búsqueda</h3>
+            </div>
+            <div class="card-body">
+                <form id="formRuta">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="origen"><i class="fas fa-map-marker-alt text-success"></i> Ciudad Origen</label>
+                                <select id="origen" class="form-control" required>
+                                    <option value="">Seleccione ciudad origen</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="destino"><i class="fas fa-flag-checkered text-danger"></i> Ciudad Destino</label>
+                                <select id="destino" class="form-control" required>
+                                    <option value="">Seleccione ciudad destino</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label for="criterio"><i class="fas fa-cogs"></i> Optimizar por</label>
+                                <select id="criterio" class="form-control">
+                                    <option value="distancia">Distancia</option>
+                                    <option value="tiempo">Tiempo</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group">
+                                <label>&nbsp;</label>
+                                <button type="submit" class="btn btn-primary btn-block">
+                                    <i class="fas fa-search"></i> Calcular Ruta
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Mapa y leyenda -->
+        <div class="row">
+            <div class="col-md-9">
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-map"></i> Visualización de Ruta</h3>
+                    </div>
+                    <div class="card-body p-0">
+                        <div id="map"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <!-- Leyenda del semáforo -->
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-traffic-light"></i> Estado de las Vías</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="legend-item mb-2">
+                            <span class="legend-color" style="background-color: green;"></span>
+                            <span class="legend-text">BUENA - Vía en perfecto estado</span>
+                        </div>
+                        <div class="legend-item mb-2">
+                            <span class="legend-color" style="background-color: orange;"></span>
+                            <span class="legend-text">REGULAR - Vía con dificultades menores</span>
+                        </div>
+                        <div class="legend-item mb-2">
+                            <span class="legend-color" style="background-color: red;"></span>
+                            <span class="legend-text">MALA - Vía en mal estado</span>
+                        </div>
+                        <hr>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle"></i> 
+                            Los colores en el mapa representan el estado actual de cada tramo de la ruta.
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Resultados -->
+                <div class="card" id="resultadosCard" style="display: none;">
+                    <div class="card-header">
+                        <h3 class="card-title"><i class="fas fa-chart-line"></i> Resultados</h3>
+                    </div>
+                    <div class="card-body">
+                        <div id="resultado"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    #map { 
+        height: 500px; 
+        width: 100%;
+    }
+    .legend-color {
+        display: inline-block;
+        width: 20px;
+        height: 15px;
+        margin-right: 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+    }
+    .legend-text {
+        font-weight: 500;
+    }
+</style>
+
+<script>
+    const estadoColor = {
+        "BUENA": "green",
+        "REGULAR": "orange", 
+        "MALA": "red"
+    };
+
+    let map = L.map('map').setView([-1.25, -78.6], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marcadores = [];
+    let lineas = [];
+
+    function limpiarMapa() {
+        marcadores.forEach(m => map.removeLayer(m));
+        lineas.forEach(l => map.removeLayer(l));
+        marcadores = [];
+        lineas = [];
+    }
+
+    function cargarCiudades() {
+        // Limpiar selectores primero
+        $('#origen').empty().append('<option value="">Seleccione ciudad origen</option>');
+        $('#destino').empty().append('<option value="">Seleccione ciudad destino</option>');
+        
+        $.getJSON('/api/ciudades', function(data) {
+            data.forEach(c => {
+                $('#origen').append(`<option value="${c.id}">${c.nombre}</option>`);
+                $('#destino').append(`<option value="${c.id}">${c.nombre}</option>`);
+            });
+        }).fail(function(xhr, status, error) {
+            console.error('Error cargando ciudades:', error);
+            alert('Error al cargar las ciudades. Por favor recargue la página.');
+        });
+    }
+
+    $('#formRuta').on('submit', function(e) {
+        e.preventDefault();
+        limpiarMapa();
+
+        let origen = $('#origen').val();
+        let destino = $('#destino').val();
+        let criterio = $('#criterio').val();
+
+        if (!origen || !destino) {
+            alert('Por favor seleccione ciudad origen y destino');
+            return;
+        }
+
+        if (origen === destino) {
+            alert('La ciudad origen y destino no pueden ser iguales');
+            return;
+        }
+
+        // Mostrar loading
+        $('#resultado').html('<i class="fas fa-spinner fa-spin"></i> Calculando ruta...');
+        $('#resultadosCard').show();
+
+        $.ajax({
+            url: '/api/calcular_ruta',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ origen, destino, criterio }),
+            success: function(response) {
+                if (response.error) {
+                    $('#resultado').html(`<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${response.error}</div>`);
+                    return;
+                }
+                
+                if (!response.ruta || response.ruta.length === 0) {
+                    $('#resultado').html('<div class="alert alert-warning"><i class="fas fa-exclamation-triangle"></i> No se encontró ruta entre las ciudades seleccionadas.</div>');
+                    return;
+                }
+
+                let puntos = response.ruta;
+
+                // Agregar marcadores y líneas
+                puntos.forEach((p, i) => {
+                    let iconColor = i === 0 ? 'green' : (i === puntos.length - 1 ? 'red' : 'blue');
+                    let marker = L.marker([p.lat, p.lon]).addTo(map)
+                        .bindPopup(`<strong>${p.nombre}</strong><br>${i === 0 ? 'Origen' : (i === puntos.length - 1 ? 'Destino' : 'Paso')}`);
+                    marcadores.push(marker);
+
+                    if (i > 0) {
+                        let estado = p.estado || "BUENA";
+                        let color = estadoColor[estado.toUpperCase()] || "blue";
+
+                        let linea = L.polyline([
+                            [puntos[i - 1].lat, puntos[i - 1].lon],
+                            [p.lat, p.lon]
+                        ], {
+                            color,
+                            weight: 5,
+                            opacity: 0.8
+                        }).addTo(map);
+
+                        linea.bindPopup(`Estado: ${estado}<br>Tramo: ${puntos[i - 1].nombre} → ${p.nombre}`);
+                        lineas.push(linea);
+                    }
+                });
+
+                // Ajustar vista del mapa
+                let group = new L.featureGroup([...marcadores, ...lineas]);
+                map.fitBounds(group.getBounds().pad(0.1));
+
+                // Mostrar resultados
+                let criterioTexto = response.criterio_usado === 'distancia' ? 'Distancia' : 'Tiempo';
+                $('#resultado').html(`
+                    <div class="alert alert-success">
+                        <h5><i class="fas fa-check-circle"></i> Ruta calculada</h5>
+                        <p><strong>Criterio:</strong> ${criterioTexto}</p>
+                        <p><strong>Ruta:</strong> ${response.descripcion}</p>
+                        <hr>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong><i class="fas fa-road"></i> Distancia:</strong><br>
+                                <span class="text-primary">${response.distancia_total} km</span>
+                            </div>
+                            <div class="col-6">
+                                <strong><i class="fas fa-clock"></i> Tiempo estimado:</strong><br>
+                                <span class="text-info">${Math.round(response.tiempo_total)} min</span>
+                            </div>
+                        </div>
+                    </div>
+                `);
+            },
+            error: function(xhr, status, error) {
+                let errorMessage = 'Error al calcular la ruta. Intente nuevamente.';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMessage = xhr.responseJSON.error;
+                }
+                console.error('Error AJAX:', {xhr, status, error}); // Debug
+                $('#resultado').html(`<div class="alert alert-danger"><i class="fas fa-exclamation-circle"></i> ${errorMessage}</div>`);
+            }
+        });
+    });
+
+    $(document).ready(function() {
+        cargarCiudades();
+        
+        // Prellenar campos si vienen parámetros de URL (desde historial)
+        const urlParams = new URLSearchParams(window.location.search);
+        const origenParam = urlParams.get('origen');
+        const destinoParam = urlParams.get('destino');
+        
+        if (origenParam && destinoParam) {
+            // Esperar a que se carguen las ciudades y luego seleccionar
+            setTimeout(() => {
+                $('#origen option').each(function() {
+                    if ($(this).text() === origenParam) {
+                        $(this).prop('selected', true);
+                    }
+                });
+                $('#destino option').each(function() {
+                    if ($(this).text() === destinoParam) {
+                        $(this).prop('selected', true);
+                    }
+                });
+            }, 1000);
+        }
+    });
+</script>
+{% endblock %}
+
+                        lineas.push(linea);
+                    }
+                });
+
+                map.setView([puntos[0].lat, puntos[0].lon], 8);
+
+                $('#resultado').text(response.descripcion).show();
+            },
+            error: function() {
+                alert('Error al calcular la ruta.');
+            }
+        });
+    });
+
+    $(document).ready(cargarCiudades);
+</script>
+</body>
+</html>

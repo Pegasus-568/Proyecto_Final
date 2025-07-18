@@ -1,0 +1,81 @@
+# SISTEMA DE RUTAS ÓPTIMAS - DEPENDENCIAS
+# =========================================
+# Este archivo contiene todas las dependencias necesarias para ejecutar el sistema
+
+# 🌐 FRAMEWORK WEB PRINCIPAL
+# ---------------------------
+Flask==2.3.3
+# Framework web principal para Python - Maneja rutas, templates, sesiones
+
+# 🔐 AUTENTICACIÓN Y SEGURIDAD
+# -----------------------------
+Flask-Login==0.6.3
+# Manejo de sesiones de usuario y autenticación
+Werkzeug==2.3.7
+# Utilidades para Flask - Incluye funciones de hashing para contraseñas
+
+# 🗄️ BASE DE DATOS
+# -----------------
+mysql-connector-python==8.1.0
+# Conector oficial de MySQL para Python - Maneja todas las conexiones a la BD
+
+# 📊 ANÁLISIS DE DATOS Y ALGORITMOS
+# ----------------------------------
+networkx==3.1
+# Biblioteca para análisis de grafos - Usado para algoritmos de rutas (Dijkstra)
+
+# 📈 VISUALIZACIÓN Y GRÁFICOS
+# ----------------------------
+matplotlib==3.7.2
+# Biblioteca para crear gráficos y visualizaciones
+folium==0.14.0
+# Generación de mapas interactivos con Leaflet.js
+
+# 🧮 CÁLCULOS MATEMÁTICOS
+# ------------------------
+numpy==1.25.2
+# Biblioteca para cálculos numéricos eficientes
+# Requerida por matplotlib y networkx
+
+# 🎨 FRONTEND (CDN - No requiere instalación)
+# --------------------------------------------
+# AdminLTE 3.2.0 - Framework de interfaz de usuario
+# Bootstrap 4.6.0 - Framework CSS responsivo
+# jQuery 3.6.0 - Biblioteca JavaScript
+# DataTables 1.13.0 - Tablas interactivas
+# Leaflet.js 1.9.0 - Mapas interactivos
+# FontAwesome 5.15.4 - Iconos
+
+# 🛠️ HERRAMIENTAS DE DESARROLLO (OPCIONAL)
+# -----------------------------------------
+# requests==2.31.0
+# Para pruebas de API y debugging
+# pytest==7.4.0
+# Para tests unitarios
+# python-dotenv==1.0.0
+# Para manejo de variables de entorno
+
+# 📋 REQUISITOS DEL SISTEMA
+# -------------------------
+# Python 3.8+ (Recomendado: Python 3.11+)
+# MySQL 8.0+ o MariaDB 10.5+
+# Navegador web moderno (Chrome, Firefox, Safari, Edge)
+# Mínimo 4GB RAM
+# Espacio en disco: 100MB para la aplicación + espacio para BD
+
+# 🚀 INSTALACIÓN
+# ---------------
+# 1. Clonar el repositorio
+# 2. Crear entorno virtual: python -m venv venv
+# 3. Activar entorno: venv\Scripts\activate (Windows) o source venv/bin/activate (Linux/Mac)
+# 4. Instalar dependencias: pip install -r requirements.txt
+# 5. Configurar base de datos en config.py
+# 6. Ejecutar: python app.py
+
+# 📝 NOTAS IMPORTANTES
+# --------------------
+# - Todas las versiones están probadas y son compatibles
+# - El sistema funciona en Windows, Linux y macOS
+# - La base de datos debe estar configurada antes de ejecutar
+# - El puerto por defecto es 5000 (configurable en app.py)
+# - Para producción, usar un servidor WSGI como Gunicorn o uWSGI

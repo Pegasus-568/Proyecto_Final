@@ -1,0 +1,345 @@
+{% extends 'base.html' %}
+
+{% block title %}Historial de Consultas - Sistema de Rutas{% endblock %}
+
+{% block content %}
+<div class="content-header">
+    <div class="container-fluid">
+        <div class="row mb-2">
+            <div class="col-sm-6">
+                <h1>Historial de Consultas</h1>
+            </div>
+            <div class="col-sm-6">
+                <ol class="breadcrumb float-sm-right">
+                    <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+                    <li class="breadcrumb-item active">Historial</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<section class="content">
+    <div class="container-fluid">
+        <!-- Estadísticas rápidas -->
+        <div class="row mb-3">
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-info">
+                    <div class="inner">
+                        <h3 id="totalConsultas">0</h3>
+                        <p>Total Consultas</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-success">
+                    <div class="inner">
+                        <h3 id="distanciaTotal">0</h3>
+                        <p>Km Consultados</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-road"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-warning">
+                    <div class="inner">
+                        <h3 id="rutaFavorita">-</h3>
+                        <p>Ruta Más Consultada</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-3 col-6">
+                <div class="small-box bg-danger">
+                    <div class="inner">
+                        <h3 id="ultimaConsulta">-</h3>
+                        <p>Última Consulta</p>
+                    </div>
+                    <div class="icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de historial -->
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title"><i class="fas fa-history"></i> Historial de Consultas</h3>
+                <div class="card-tools">
+                    <button type="button" class="btn btn-sm btn-primary" onclick="cargarHistorial()">
+                        <i class="fas fa-sync-alt"></i> Actualizar
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div id="loadingHistorial" class="text-center" style="display: none;">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando historial...</p>
+                </div>
+                
+                <div id="errorHistorial" class="alert alert-danger" style="display: none;">
+                    <i class="fas fa-exclamation-circle"></i>
+                    <span id="errorMessage"></span>
+                </div>
+
+                <div id="noHistorial" class="text-center" style="display: none;">
+                    <i class="fas fa-folder-open fa-3x text-muted mb-3"></i>
+                    <h5>No hay consultas en el historial</h5>
+                    <p class="text-muted">Realiza tu primera consulta de ruta para ver el historial aquí.</p>
+                    <a href="/consultar" class="btn btn-primary">
+                        <i class="fas fa-route"></i> Consultar Ruta
+                    </a>
+                </div>
+
+                <div class="table-responsive" id="tablaHistorial" style="display: none;">
+                    <table class="table table-bordered table-striped" id="historialTable">
+                        <thead>
+                            <tr>
+                                <th><i class="fas fa-hashtag"></i> #</th>
+                                <th><i class="fas fa-map-marker-alt"></i> Origen</th>
+                                <th><i class="fas fa-flag-checkered"></i> Destino</th>
+                                <th><i class="fas fa-road"></i> Distancia</th>
+                                <th><i class="fas fa-route"></i> Ciudades</th>
+                                <th><i class="fas fa-calendar"></i> Fecha</th>
+                                <th><i class="fas fa-cogs"></i> Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historialBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Modal para detalle de consulta -->
+<div class="modal fade" id="modalDetalle" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title"><i class="fas fa-info-circle"></i> Detalle de Consulta</h4>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="loadingDetalle" class="text-center">
+                    <i class="fas fa-spinner fa-spin fa-2x"></i>
+                    <p>Cargando detalle...</p>
+                </div>
+                <div id="contenidoDetalle" style="display: none;">
+                    <!-- El contenido se carga dinámicamente -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary" id="btnRepetirConsulta" style="display: none;">
+                    <i class="fas fa-redo"></i> Repetir Consulta
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let historialData = [];
+
+    function cargarHistorial() {
+        $('#loadingHistorial').show();
+        $('#errorHistorial').hide();
+        $('#noHistorial').hide();
+        $('#tablaHistorial').hide();
+
+        $.ajax({
+            url: '/api/historial',
+            type: 'GET',
+            success: function(data) {
+                $('#loadingHistorial').hide();
+                historialData = data;
+                
+                if (data.length === 0) {
+                    $('#noHistorial').show();
+                } else {
+                    mostrarHistorial(data);
+                    actualizarEstadisticas(data);
+                    $('#tablaHistorial').show();
+                }
+            },
+            error: function(xhr, status, error) {
+                $('#loadingHistorial').hide();
+                let errorMsg = 'Error al cargar el historial';
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    errorMsg = xhr.responseJSON.error;
+                }
+                $('#errorMessage').text(errorMsg);
+                $('#errorHistorial').show();
+            }
+        });
+    }
+
+    function mostrarHistorial(data) {
+        let tbody = $('#historialBody');
+        tbody.empty();
+
+        data.forEach((item, index) => {
+            let row = `
+                <tr>
+                    <td>${index + 1}</td>
+                    <td><span class="badge badge-success">${item.ciudad_origen}</span></td>
+                    <td><span class="badge badge-danger">${item.ciudad_destino}</span></td>
+                    <td>${item.total_distance} km</td>
+                    <td>${item.num_ciudades} ciudades</td>
+                    <td>${item.query_date}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info" onclick="verDetalle(${item.id})">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                    </td>
+                </tr>
+            `;
+            tbody.append(row);
+        });
+
+        // Inicializar DataTable si no existe
+        if (!$.fn.DataTable.isDataTable('#historialTable')) {
+            $('#historialTable').DataTable({
+                "language": {
+                    "url": "//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json"
+                },
+                "order": [[ 5, "desc" ]], // Ordenar por fecha descendente
+                "pageLength": 10
+            });
+        }
+    }
+
+    function actualizarEstadisticas(data) {
+        let totalConsultas = data.length;
+        let distanciaTotal = data.reduce((sum, item) => sum + item.total_distance, 0);
+        
+        // Ruta más consultada (simplificado)
+        let rutas = {};
+        data.forEach(item => {
+            let rutaKey = `${item.ciudad_origen} → ${item.ciudad_destino}`;
+            rutas[rutaKey] = (rutas[rutaKey] || 0) + 1;
+        });
+        
+        let rutaFavorita = Object.keys(rutas).reduce((a, b) => rutas[a] > rutas[b] ? a : b, '-');
+        let ultimaConsulta = data.length > 0 ? data[0].query_date : '-';
+
+        $('#totalConsultas').text(totalConsultas);
+        $('#distanciaTotal').text(Math.round(distanciaTotal));
+        $('#rutaFavorita').text(rutaFavorita.length > 20 ? rutaFavorita.substring(0, 20) + '...' : rutaFavorita);
+        $('#ultimaConsulta').text(ultimaConsulta);
+    }
+
+    function verDetalle(consultaId) {
+        $('#modalDetalle').modal('show');
+        $('#loadingDetalle').show();
+        $('#contenidoDetalle').hide();
+        $('#btnRepetirConsulta').hide();
+
+        $.ajax({
+            url: `/api/historial/${consultaId}`,
+            type: 'GET',
+            success: function(data) {
+                $('#loadingDetalle').hide();
+                mostrarDetalle(data);
+                $('#contenidoDetalle').show();
+                $('#btnRepetirConsulta').show().data('consulta', data);
+            },
+            error: function(xhr, status, error) {
+                $('#loadingDetalle').hide();
+                $('#contenidoDetalle').html(`
+                    <div class="alert alert-danger">
+                        <i class="fas fa-exclamation-circle"></i>
+                        Error al cargar el detalle de la consulta
+                    </div>
+                `).show();
+            }
+        });
+    }
+
+    function mostrarDetalle(data) {
+        let contenido = `
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="fas fa-info-circle"></i> Información General</h5>
+                    <table class="table table-sm">
+                        <tr><td><strong>Origen:</strong></td><td>${data.ciudad_origen}</td></tr>
+                        <tr><td><strong>Destino:</strong></td><td>${data.ciudad_destino}</td></tr>
+                        <tr><td><strong>Distancia:</strong></td><td>${data.total_distance} km</td></tr>
+                        <tr><td><strong>Tiempo estimado:</strong></td><td>${Math.round(data.tiempo_estimado)} min</td></tr>
+                        <tr><td><strong>Fecha consulta:</strong></td><td>${data.query_date}</td></tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <h5><i class="fas fa-route"></i> Ruta Completa</h5>
+                    <div class="timeline">
+        `;
+        
+        if (data.ruta_completa && data.ruta_completa.length > 0) {
+            data.ruta_completa.forEach((ciudad, index) => {
+                let icon = index === 0 ? 'fa-play text-success' : 
+                          (index === data.ruta_completa.length - 1 ? 'fa-stop text-danger' : 'fa-circle text-primary');
+                contenido += `
+                    <div class="timeline-item">
+                        <i class="fas ${icon}"></i> ${ciudad.nombre}
+                    </div>
+                `;
+            });
+        } else {
+            contenido += '<p class="text-muted">No hay información detallada de la ruta</p>';
+        }
+        
+        contenido += `
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        $('#contenidoDetalle').html(contenido);
+    }
+
+    $('#btnRepetirConsulta').click(function() {
+        let consulta = $(this).data('consulta');
+        if (consulta) {
+            // Redirigir a la página de consulta con parámetros
+            window.location.href = `/consultar?origen=${consulta.ciudad_origen}&destino=${consulta.ciudad_destino}`;
+        }
+    });
+
+    $(document).ready(function() {
+        cargarHistorial();
+    });
+</script>
+
+<style>
+    .timeline {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    .timeline-item {
+        padding: 5px 0;
+        border-left: 2px solid #ddd;
+        padding-left: 15px;
+        position: relative;
+    }
+    .timeline-item i {
+        position: absolute;
+        left: -8px;
+        background: white;
+        padding: 2px;
+    }
+</style>
+{% endblock %}

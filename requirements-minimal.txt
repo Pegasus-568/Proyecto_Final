@@ -1,0 +1,13 @@
+# DEPENDENCIAS MÍNIMAS - SISTEMA DE RUTAS
+# ========================================
+# Versión simplificada con solo lo esencial
+
+Flask==2.3.3
+Flask-Login==0.6.3
+mysql-connector-python==8.1.0
+Werkzeug==2.3.7
+
+# Opcional (para visualizaciones avanzadas):
+# networkx==3.1
+# matplotlib==3.7.2
+# folium==0.14.0

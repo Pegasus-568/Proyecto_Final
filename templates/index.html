@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Inicio - Sistema de Rutas{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="jumbotron">
+    <h1 class="display-4">¡Bienvenido al Sistema de Rutas Inteligentes del Ecuador!</h1>
+    <p class="lead">
+      Este sistema ha sido desarrollado como parte del proyecto académico de la asignatura <strong>Programación IV</strong>, correspondiente al cuarto semestre de la carrera de <strong>Ingeniería en Sistemas de la Información</strong>.
+    </p>
+    <hr class="my-4">
+    <p>El sistema permite consultar rutas entre ciudades del Ecuador y gestionar información geográfica mediante un grafo interactivo. Incluye control de usuarios, un algoritmo de búsqueda de rutas y gestión de provincias, ciudades y vías.</p>
+
+    <div class="alert alert-info">
+      <strong>Autor:</strong> Jonathan Jeremías Acurio Noroña
+    </div>
+
+    <a class="btn btn-primary btn-lg" href="{{ url_for('auth.login') }}">
+      <i class="fas fa-sign-in-alt"></i> Iniciar sesión
+    </a>
+  </div>
+</div>
+{% endblock %}
